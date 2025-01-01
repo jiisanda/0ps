@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
       version = "~> 5.0"
     }
   }
@@ -10,7 +10,7 @@ terraform {
 # select the provider
 provider "aws" {
   profile = "default"
-  region = "us-west-2"
+  region  = "us-west-2"
 }
 
 # creating vpc
@@ -24,8 +24,8 @@ resource "aws_vpc" "main" {
 
 # subnet
 resource "aws_subnet" "public" {
-  vpc_id = aws_vpc.main.id
-  cidr_block = "10.0.0.0/24"
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.0.0/24"
   availability_zone = "us-west-2a"
 
   tags = {
@@ -34,8 +34,8 @@ resource "aws_subnet" "public" {
 }
 
 resource "aws_subnet" "private" {
-  vpc_id = aws_vpc.main.id
-  cidr_block = "10.0.1.0/24"
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.1.0/24"
   availability_zone = "us-west-2b"
 
   tags = {
@@ -67,69 +67,69 @@ resource "aws_route_table" "public" {
   }
 
   tags = {
-      Name = "public route table"
+    Name = "public route table"
   }
 }
 
 # route table association to subnet
 resource "aws_route_table_association" "public" {
-  subnet_id = aws_subnet.public.id
+  subnet_id      = aws_subnet.public.id
   route_table_id = aws_route_table.public.id
 }
 
 # security groups
 resource "aws_security_group" "secgrp" {
-  name = "public_sg"
+  name        = "public_sg"
   description = "Allow web traffic"
-  vpc_id = aws_vpc.main.id
+  vpc_id      = aws_vpc.main.id
 
   tags = {
-      Name = "public security group"
+    Name = "public security group"
   }
 }
 
 resource "aws_security_group_rule" "port_443" {
-  for_each = toset(["0.0.0.0/0"])
-  description = "HTTPS traffic"
-  type = "ingress"
-  from_port = 443
-  to_port = 443
-  protocol = "tcp"
-  cidr_blocks = [each.value]
+  for_each          = toset(["0.0.0.0/0"])
+  description       = "HTTPS traffic"
+  type              = "ingress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = [each.value]
   security_group_id = aws_security_group.secgrp.id
 }
 
 resource "aws_security_group_rule" "port_80" {
-  description = "HTTP traffic"
-  for_each = toset(["0.0.0.0/0"])
+  description       = "HTTP traffic"
+  for_each          = toset(["0.0.0.0/0"])
   from_port         = 80
   protocol          = "tcp"
   security_group_id = aws_security_group.secgrp.id
   to_port           = 80
   type              = "ingress"
-  cidr_blocks = [each.value]
+  cidr_blocks       = [each.value]
 }
 
 resource "aws_security_group_rule" "port_22" {
-  description = "HTTP traffic"
-  for_each = toset(["0.0.0.0/0"])
+  description       = "HTTP traffic"
+  for_each          = toset(["0.0.0.0/0"])
   from_port         = 22
   protocol          = "tcp"
   security_group_id = aws_security_group.secgrp.id
   to_port           = 22
   type              = "ingress"
-  cidr_blocks = [each.value]
+  cidr_blocks       = [each.value]
 }
 
 resource "aws_security_group_rule" "egress_sg" {
-  description = "All traffic"
-  for_each = toset(["0.0.0.0/0"])
+  description       = "All traffic"
+  for_each          = toset(["0.0.0.0/0"])
   from_port         = 0
   protocol          = "-1"
   security_group_id = aws_security_group.secgrp.id
   to_port           = 0
   type              = "egress"
-  cidr_blocks = [each.value]
+  cidr_blocks       = [each.value]
 }
 
 # network interface
@@ -142,18 +142,18 @@ resource "aws_network_interface" "netif" {
 # assigning elastic ip to instance
 resource "aws_eip" "one" {
   instance = aws_instance.public_instance.id
-  domain = "vpc"
+  domain   = "vpc"
 
   depends_on = [aws_internet_gateway.gw]
 }
 
 # aws ec2 instance
 resource "aws_instance" "public_instance" {
-  ami = "ami-07d9cf938edb0739b"
-  instance_type = "t2.micro"
+  ami               = "ami-07d9cf938edb0739b"
+  instance_type     = "t2.micro"
   availability_zone = "us-west-2a"
 
-  key_name = "rootkey"
+  key_name          = "rootkey"
 
   network_interface {
     device_index         = 0
