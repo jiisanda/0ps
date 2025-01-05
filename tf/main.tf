@@ -7,15 +7,76 @@ terraform {
   }
 }
 
+variable "aws_profile" {
+  description = "The AWS profile to use"
+  type = string
+  default = "default"
+}
+
+variable "aws_region" {
+  description = "The AWS region"
+  type = string
+}
+
+variable "vpc_cidr" {
+  description = "VPC CiDR"
+  type = string
+}
+
+variable "public_subnet_cidr" {
+  description = "Public Subnet CiDR"
+  type = string
+}
+
+variable "private_subnet_cidr" {
+  description = "Private Subnet CiDR"
+  type = string
+}
+
+variable "availability_zone" {
+  description = "Availability zone"
+  type = string
+}
+
+variable "public_instance_ami" {
+  description = "Public AMI"
+  type = string
+}
+
+variable "private_instance_ami" {
+  description = "Private AMI"
+  type = string
+}
+
+variable "instance_type" {
+  description = "Instance type"
+  type = string
+}
+
+variable "key_name" {
+  description = "Name of the key file"
+  type = string
+}
+
+variable "public_instance_private_ip" {
+  description = "Public instance private ip"
+  type = string
+}
+
+variable "private_instance_private_ip" {
+  description = "Private instance private ip"
+  type = string
+}
+
 # select the provider
 provider "aws" {
-  profile = "default"
-  region  = "us-west-2"
+  profile = var.aws_profile
+  region  = var.aws_region
 }
 
 # creating vpc
 resource "aws_vpc" "main" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block = var.vpc_cidr
 
   tags = {
     Name = "main vpc"
@@ -25,8 +86,8 @@ resource "aws_vpc" "main" {
 # subnet
 resource "aws_subnet" "public" {
   vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.0.0/24"
-  availability_zone = "us-west-2a"
+  cidr_block        = var.public_subnet_cidr
+  availability_zone = var.availability_zone
 
   tags = {
     Name = "public subnet"
@@ -35,8 +96,8 @@ resource "aws_subnet" "public" {
 
 resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = "us-west-2a"
+  cidr_block        = var.private_subnet_cidr
+  availability_zone = var.availability_zone
 
   tags = {
     Name = "private subnet"
@@ -45,11 +106,11 @@ resource "aws_subnet" "private" {
 
 # aws ec2 instance
 resource "aws_instance" "public_instance" {
-  ami               = "ami-07d9cf938edb0739b"
-  instance_type     = "t2.micro"
-  availability_zone = "us-west-2a"
+  ami               = var.public_instance_ami
+  instance_type     = var.instance_type
+  availability_zone = var.availability_zone
 
-  key_name = "rootkey"
+  key_name = var.key_name
 
   network_interface {
     device_index         = 0
@@ -70,11 +131,11 @@ resource "aws_instance" "public_instance" {
 }
 
 resource "aws_instance" "private_instance" {
-  ami               = "ami-07d9cf938edb0739b"
-  instance_type     = "t2.micro"
-  availability_zone = "us-west-2a"
+  ami               = var.private_instance_ami
+  instance_type     = var.instance_type
+  availability_zone = var.availability_zone
 
-  key_name = "rootkey"
+  key_name = var.key_name
 
   network_interface {
     device_index         = 0
@@ -228,4 +289,8 @@ resource "aws_eip" "one" {
 
 resource "aws_eip" "nat_eip" {
   domain = "vpc"
+}
+
+output "public_instance_public_ip" {
+  value = aws_eip.one.public_ip
 }
